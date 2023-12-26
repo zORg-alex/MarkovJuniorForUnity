@@ -1,0 +1,16 @@
+{
+    "name": "MarkovJuniorForUnity",
+    "rootNamespace": "",
+    "references": [
+        "GUID:50224496d81ed6249bb99ddce52e3fdf"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
