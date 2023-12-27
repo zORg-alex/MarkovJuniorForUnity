@@ -1,10 +1,8 @@
 {
-    "name": "MarkovJuniorForUnity",
+    "name": "zORgs.XML",
     "rootNamespace": "",
     "references": [
-        "GUID:50224496d81ed6249bb99ddce52e3fdf",
-        "GUID:73c70a6eb6b6f444c878926f743350f6",
-        "GUID:05a40573dd583aa4c86ab4a223f221d4"
+        "GUID:73c70a6eb6b6f444c878926f743350f6"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

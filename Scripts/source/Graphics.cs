@@ -41,7 +41,7 @@ static class Graphics
         int TOTALWIDTH = WIDTH, TOTALHEIGHT = HEIGHT;
         //int TOTALWIDTH = 189 + MARGIN, TOTALHEIGHT = 189;
         int[] bitmap = new int[TOTALWIDTH * TOTALHEIGHT];
-        for (int i = 0; i < bitmap.Length; i++) bitmap[i] = GUI.BACKGROUND;
+        for (int i = 0; i < bitmap.Length; i++) bitmap[i] = MJGUI.BACKGROUND;
         //for (int i = 0; i < bitmap.Length; i++) bitmap[i] = 255 << 24;
 
         int DX = (TOTALWIDTH - WIDTH) / 2;
@@ -115,7 +115,7 @@ static class Graphics
         //const int WIDTH = 330, HEIGHT = 330;
 
         int[] screen = new int[(MARGIN + WIDTH) * HEIGHT];
-        for (int i = 0; i < screen.Length; i++) screen[i] = GUI.BACKGROUND;
+        for (int i = 0; i < screen.Length; i++) screen[i] = MJGUI.BACKGROUND;
 
         void Blit(int[] sprite, int SX, int SY, int x, int y, int r, int g, int b)
         {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Xml.Linq;
 using System.Collections.Generic;
 
-static class GUI
+static class MJGUI
 {
     static readonly int S, SMALL, MAXWIDTH, ZSHIFT, HINDENT, HGAP, HARROW, HLINE, VSKIP, SMALLVSKIP, FONTSHIFT, AFTERFONT;
     static readonly bool DENSE, D3;
@@ -16,7 +16,7 @@ static class GUI
 
     static readonly char[] legend = "ABCDEFGHIJKLMNOPQRSTUVWXYZ 12345abcdefghijklmnopqrstuvwxyz\u03bb67890{}[]()<>$*-+=/#_%^@\\&|~?'\"`!,.;:".ToCharArray();
     static readonly Dictionary<char, byte> map;
-    static GUI()
+    static MJGUI()
     {
         map = new Dictionary<char, byte>();
         for (int i = 0; i < legend.Length; i++) map.Add(legend[i], (byte)i);

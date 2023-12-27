@@ -67,7 +67,7 @@ static class Program
                     if (FZ == 1 || iso)
                     {
                         var (bitmap, WIDTH, HEIGHT) = Graphics.Render(result, FX, FY, FZ, colors, pixelsize, gui);
-                        if (gui > 0) GUI.Draw(name, interpreter.root, interpreter.current, bitmap, WIDTH, HEIGHT, customPalette);
+                        if (gui > 0) MJGUI.Draw(name, interpreter.root, interpreter.current, bitmap, WIDTH, HEIGHT, customPalette);
                         Graphics.SaveBitmap(bitmap, WIDTH, HEIGHT, outputname + ".png");
                     }
                     else VoxHelper.SaveVox(result, (byte)FX, (byte)FY, (byte)FZ, colors, outputname + ".vox");
