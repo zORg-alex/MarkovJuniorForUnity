@@ -11,9 +11,13 @@ namespace zORgs.XML
 	{
 		private const int MAX_DEPTH = 10;
 
+		[SerializeField]
 		private string _body;
+		[SerializeField]
 		private List<XElement> _children = new List<XElement>();
+		[SerializeField]
 		private List<XAttribute> _attributes = new List<XAttribute>();
+		[SerializeField]
 		private bool _hasParent;
 
 		public string Body { get => _body; set => _body = value; }
@@ -50,7 +54,7 @@ namespace zORgs.XML
 			if (i == MAX_DEPTH) yield break;
 			foreach (var elem in _children)
 			{
-				foreach (var elementContext in elem.EnumarateIntendated(i++))
+				foreach (var elementContext in elem.EnumarateIntendated(i + 1))
 				{
 					yield return elementContext;
 				}

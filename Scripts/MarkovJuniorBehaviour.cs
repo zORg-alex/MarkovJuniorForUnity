@@ -16,13 +16,15 @@ namespace Assets.Plugins.MarkovJuniorForUnity.Scripts
 		private void Reset()
 		{
 			int i = 0;
-			Root = new XElement();
-			Root.Add(new XElement());
-			Root.Add(new XElement());
-			foreach (var child in Root.ToList())
-				child.Add(new XElement());
+			Root = new XElement
+			{
+				new XElement(),
+				new XElement()
+			};
+			//foreach (var child in Root.ToList())
+			//	child.Add(new XElement());
 			foreach (var child in Root)
-				child["attr"+i] = i.ToString();
+				child["attr"+(++i)] = i.ToString();
 		}
 	}
 #if UNITY_EDITOR
