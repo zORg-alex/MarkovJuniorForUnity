@@ -1,9 +1,11 @@
 using RectEx;
+using Sirenix.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Graphs;
 using UnityEditorInternal;
 using UnityEngine;
 using Utility;
@@ -21,7 +23,8 @@ namespace zORgs.XML
 		public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
 		{
 			_lists.TryGetValue(property.propertyPath, out var list);
-			return (list?.GetHeight() ?? 0) + LineHeight;
+			if (list == null) return LineHeight;
+			return (list.serializedProperty.arraySize == 0 ? 0 : list.GetHeight()) + LineHeight;
 		}
 
 		private (XElement, ReorderableList) Initialize(SerializedProperty property)
@@ -52,6 +55,7 @@ namespace zORgs.XML
 		}
 
 		private float ListElementHeight(ReorderableList list, int index) =>
+			list.serializedProperty.arraySize == 0 ? 0 :
 			GetPropertyHeight(list.serializedProperty.GetArrayElementAtIndex(index), GUIContent.none);
 
 		private void ListDrawElement(ReorderableList list, Rect rect, int index, bool isActive, bool isFocused)
@@ -83,17 +87,41 @@ namespace zORgs.XML
 
 			var (val, list) = Initialize(property);
 
-			var rects = position.CutFromTop(LineHeight);
-			var curLine = rects[0];
+			var cutPosition = position.CutFromTop(LineHeight);
+			var firstLine = cutPosition[0];
 
-			EditorGUI.HelpBox(curLine, string.Empty, MessageType.None);
-			var attrRects = curLine.Row(val.Attributes.Count());
+			EditorGUI.HelpBox(firstLine, string.Empty, MessageType.None);
+
+			var opening = new GUIContent("<");
+			var closing = val.Children.Count > 0 ? new GUIContent(">") : new GUIContent("/>");
+			var attrRects = firstLine.Row(val.Attributes.Count());
+			var labels = new GUIContent[val.Attributes.Count];
+			var widths = new float[val.Attributes.Count * 2];
+			var rects = new Rect[val.Attributes.Count * 2 + 2];
+			float openingWidth = EditorStyles.label.CalcSize(opening).x;
+			rects[0] = firstLine.AlignLeft(openingWidth).Expand(0, -2);
 			for (int i = 0; i < attrRects.Length; i++)
 			{
-				val.Attributes[i].Value = EditorGUI.TextField(attrRects[i].Extend(-2), val.Attributes[i].Name, val.Attributes[i].Value);
+				labels[i] = new GUIContent(" " + val.Attributes[i].Name + " = ");
+				widths[i * 2] = EditorStyles.label.CalcSize(labels[i]).x;
+				widths[i * 2 + 1] = EditorStyles.textField.CalcSize(new GUIContent(val.Attributes[i].Value)).x;
+				rects[i * 2 + 1] = rects[i * 2].MoveRightFor(widths[i * 2], 0);
+				rects[i * 2 + 2] = rects[i * 2 + 1].MoveRightFor(widths[i * 2 + 1], 0);
 			}
+			rects[rects.Length - 1] = rects[rects.Length - 2].MoveRightFor(EditorStyles.label.CalcSize(closing).x);
 
-			list.DoList(rects[1]);
+			EditorGUI.LabelField(rects[0], opening);
+			for (int i = 0; i < attrRects.Length; i++)
+			{
+				Rect labelRect = rects[i * 2 + 1];
+				EditorGUI.LabelField(labelRect, labels[i]);
+				Rect textFieldRect = rects[i * 2 + 2];
+				val.Attributes[i].Value = EditorGUI.TextField(textFieldRect, GUIContent.none, val.Attributes[i].Value);
+			}
+			EditorGUI.LabelField(rects[rects.Length - 1], closing);
+
+			if(val.Children.Count > 0)
+				list.DoList(cutPosition[1]);
 		}
 	}
 }

@@ -22,6 +22,7 @@ namespace zORgs.XML
 
 		public string Body { get => _body; set => _body = value; }
 		public List<XElement> Children => _children;
+		public bool HasChildren => _children.Count > 0;
 		public List<XAttribute> Attributes => _attributes;
 		public bool HasParent => _hasParent;
 
