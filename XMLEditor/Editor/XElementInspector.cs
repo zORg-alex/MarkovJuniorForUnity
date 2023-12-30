@@ -137,6 +137,10 @@ namespace zORgs.XML
 			if (GUI.Button(rects[rects.Length - 2], "+"))
 				val.Attributes.Add(new XAttribute("attr", "0"));
 			EditorGUI.LabelField(rects[rects.Length - 1], closing);
+
+			int emptyIndex = val.Attributes.FindIndex(a => string.IsNullOrEmpty(a.Name));
+			if (emptyIndex != -1 && _editedAttributeInd != (propertyPath, emptyIndex))
+				val.Attributes.RemoveAt(emptyIndex);
 		}
 
 		private static void ProcessHeaderDoubleclick(Event current, string propertyPath, Rect rect, int i)
