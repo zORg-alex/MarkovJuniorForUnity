@@ -10,6 +10,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
+using zORgs.Voxes;
 
 namespace zORgs.XML
 {
@@ -47,12 +48,13 @@ namespace zORgs.XML
 
 			var val = property.GetValue<XElement>();
 			SerializedProperty listProp = property.FindPropertyRelative("_children");
+			SerializedProperty attributesProp = property.FindPropertyRelative("_attributes");
 			if (!_lists.ContainsKey(property.propertyPath))
 			{
 				ReorderableList list = new ReorderableList(listProp.serializedObject, listProp);
 				_lists[property.propertyPath] = list;
-				list.headerHeight = DoHeader(null, property.propertyPath, val, position);
-				list.drawHeaderCallback += rect => DoHeader(_current, property.propertyPath, val, rect);
+				list.headerHeight = DoHeader(null, property.propertyPath, attributesProp, val, position);
+				list.drawHeaderCallback += rect => DoHeader(_current, property.propertyPath, attributesProp, val, rect);
 				list.drawElementCallback += (r, ind, isAct, isFoc) => DoListElement(list, r, ind, isAct, isFoc);
 				list.drawNoneElementCallback += rect => { };
 				list.drawElementBackgroundCallback += (r, ind, isAct, isFoc) => DoListElementBackground(list, r, ind, isAct, isFoc);
@@ -97,7 +99,7 @@ namespace zORgs.XML
 				property.serializedObject.ApplyModifiedProperties();
 		}
 
-		private float DoHeader(Event current, string propertyPath, XElement val, Rect firstLine)
+		private float DoHeader(Event current, string propertyPath, SerializedProperty property, XElement val, Rect firstLine)
 		{
 			var currentLine = firstLine.AlignTop(EditorGUIUtility.singleLineHeight).SetY(firstLine.y + 2);
 			var opening = new GUIContent("<");
@@ -125,11 +127,11 @@ namespace zORgs.XML
 				//Label rect with linewrap
 				if (i == attrCount - 1)
 					lineWidth -= 30;
-				if (!isFirst && (lineWidth < 0 || val.Attributes[i].IsVox))
+				if (!isFirst && (lineWidth < 0))
 				{
 					lineWidth = firstLine.width - (labelWidth + attrWidth + 2);
 					lineCount++;
-					currentLine = currentLine.MoveDown();
+					currentLine = currentLine.MoveDownFor(EditorGUIUtility.singleLineHeight + 2);
 					rects[++rectInd] = currentLine.AlignLeft(labelWidth);
 				}
 				else
@@ -139,7 +141,35 @@ namespace zORgs.XML
 					ProcessHeaderDoubleclick(current, propertyPath, rects[rectInd], i);
 
 				//value rect
-				rects[++rectInd] = rects[rectInd - 1].MoveRightFor(attrWidth, 0);
+				if (val.Attributes[i].IsVox)
+				{
+					currentLine = currentLine.SetHeight(VoxEditorWindow.VisualVoxelHeight(val.Attributes[i].Vox));
+					rects[++rectInd] = rects[rectInd - 1].MoveRightFor(currentLine.height, 0).SetHeight(currentLine.height);
+				}
+				else
+					rects[++rectInd] = rects[rectInd - 1].MoveRightFor(attrWidth, 0);
+
+				//Context menu for Voxels and conversion
+				if (Event.current.type == EventType.ContextClick && rects[rectInd].Contains(Event.current.mousePosition))
+				{
+					GenericMenu menu = new GenericMenu();
+					var attr = val.Attributes[i];
+					if (attr.IsVox)
+					{
+						var index = i;
+						menu.AddItem(new GUIContent("Edit"), false, () =>
+						{
+							SerializedProperty voxProp = property.GetArrayElementAtIndex(index).FindPropertyRelative("_vox");
+							VoxEditorWindow.ShowWindow(voxProp);
+						});
+						menu.AddItem(new GUIContent("Convert To Text"), false, () => attr.Value = "0");
+					}
+					else
+						menu.AddItem(new GUIContent("Convert to Voxel"), false, () => attr.Vox = new Vox(new int[] { 1, 1, 1, 1 }));
+					menu.ShowAsContext();
+					Event.current.Use();
+				}
+
 				isFirst = false;
 			}
 			rects[++rectInd] = rects[rectInd - 1].MoveRightFor(20);
@@ -162,8 +192,16 @@ namespace zORgs.XML
 				else
 					EditorGUI.LabelField(rects[rectInd++], labels[i]);
 
-				Rect textFieldRect = rects[rectInd++];
-				val.Attributes[i].Value = EditorGUI.TextField(textFieldRect, GUIContent.none, val.Attributes[i].Value, _attributeField);
+				if (val.Attributes[i].IsVox)
+				{
+					VoxEditorWindow.DrawVoxels(current, val.Attributes[i].Vox, rects[rectInd++], 1000);
+				}
+				else
+				{
+					var value = EditorGUI.TextField(rects[rectInd++], GUIContent.none, val.Attributes[i].Value, _attributeField);
+					if (val.Attributes[i].Value != value)
+						val.Attributes[i].Value = value;
+				}
 			}
 			if (GUI.Button(rects[rectInd++], "+"))
 				val.Attributes.Add(new XAttribute("attr", "0"));

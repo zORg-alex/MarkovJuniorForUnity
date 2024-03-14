@@ -21,8 +21,14 @@ namespace zORgs.XML
 		}
 
 		public string Name { get => _name; set => _name = value; }
-		public string Value { get => _value; set => _value = value; }
-		public Vox Vox { get => _vox; set => _vox = value; }
+		public string Value { 
+			get => _value;
+			set { _value = value; _vox = default; }
+		}
+		public Vox Vox { 
+			get => _vox; 
+			set { _vox = value; _value = string.Empty; }
+		}
 		public bool IsVox => !_vox.IsDefault;
 	}
 }

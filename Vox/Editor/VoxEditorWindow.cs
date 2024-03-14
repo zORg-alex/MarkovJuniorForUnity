@@ -174,7 +174,7 @@ namespace zORgs.Voxes
 			return false;
 		}
 
-		internal static (Vox.Voxel v, Rect pos) DrawVoxels(Event current, Vox vox, Rect drawRect, int layer,
+		public static (Vox.Voxel v, Rect pos) DrawVoxels(Event current, Vox vox, Rect drawRect, int layer = -1,
 			Vector2 mousePos = default, bool drawGrid = false)
 		{
 			var center = drawRect.position + Vector2.right * drawRect.width / 2 + Vector2.up * (vox.Size.y * 2) * visualVoxelOffset.y;
@@ -183,7 +183,7 @@ namespace zORgs.Voxes
 				(Vox.Voxel v, Rect pos) vOver = (default, default);
 				foreach (var v in vox.GetVoxels())
 				{
-					var visible = layer >= v.y;
+					var visible = layer >= v.y || layer == -1;
 					float depth = .5f + VisualVoxelDepth(v) / vox.Size.magnitude / 2;
 					Rect pos = new Rect(center + VoxelCanvasOffset(v) - visualVoxelSize / 2, visualVoxelSize);
 
@@ -204,7 +204,7 @@ namespace zORgs.Voxes
 			return default;
 		}
 
-		internal static float VisualVoxelHeight(Vox vox) =>
+		public static float VisualVoxelHeight(Vox vox) =>
 			(vox.Size.y * 2 + vox.Size.x + vox.Size.z) * visualVoxelOffset.y;
 
 		internal static float VisualVoxelDepth((int x, int y, int z, int col) v)
