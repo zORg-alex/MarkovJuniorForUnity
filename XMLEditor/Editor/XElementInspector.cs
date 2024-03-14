@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEditor.Graphs;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Utility;
 
 namespace zORgs.XML
@@ -30,8 +31,9 @@ namespace zORgs.XML
 			return list.GetHeight();
 		}
 
-		private (XElement, ReorderableList) Initialize(SerializedProperty property)
+		private (XElement, ReorderableList) Initialize(Rect position, SerializedProperty property)
 		{
+			ReorderableList.defaultBehaviours.headerBackground.fixedHeight = 0;
 			if (_object != property.serializedObject)
 			{
 				_object = property.serializedObject;
@@ -45,15 +47,16 @@ namespace zORgs.XML
 
 			var val = property.GetValue<XElement>();
 			SerializedProperty listProp = property.FindPropertyRelative("_children");
-			if (!_lists.ContainsKey(listProp.propertyPath))
+			if (!_lists.ContainsKey(property.propertyPath))
 			{
 				ReorderableList list = new ReorderableList(listProp.serializedObject, listProp);
-				list.headerHeight = LineHeight;
-				list.drawHeaderCallback += rect => DoHeader(_current, property.propertyPath, val, rect);
-				list.drawElementCallback += (r, ind, isAct, isFoc) => ListDrawElement(list, r, ind, isAct, isFoc);
-				list.drawElementBackgroundCallback += (r, ind, isAct, isFoc) => ListDrawElementBackground(list, r, ind, isAct, isFoc);
-				list.elementHeightCallback += ind => ListElementHeight(list, ind);
 				_lists[property.propertyPath] = list;
+				list.headerHeight = DoHeader(null, property.propertyPath, val, position);
+				list.drawHeaderCallback += rect => DoHeader(_current, property.propertyPath, val, rect);
+				list.drawElementCallback += (r, ind, isAct, isFoc) => DoListElement(list, r, ind, isAct, isFoc);
+				list.drawNoneElementCallback += rect => { };
+				list.drawElementBackgroundCallback += (r, ind, isAct, isFoc) => DoListElementBackground(list, r, ind, isAct, isFoc);
+				list.elementHeightCallback += ind => ListElementHeight(list, ind);
 				return (val, list);
 			}
 
@@ -64,14 +67,14 @@ namespace zORgs.XML
 			list.serializedProperty.arraySize == 0 ? 0 :
 			GetPropertyHeight(list.serializedProperty.GetArrayElementAtIndex(index), GUIContent.none);
 
-		private void ListDrawElement(ReorderableList list, Rect rect, int index, bool isActive, bool isFocused)
+		private void DoListElement(ReorderableList list, Rect rect, int index, bool isActive, bool isFocused)
 		{
 			if (index == 0 && list.serializedProperty.arraySize == 0)
 				return;
 			OnGUI(rect, list.serializedProperty.GetArrayElementAtIndex(index), GUIContent.none);
 		}
 
-		private void ListDrawElementBackground(ReorderableList list, Rect rect, int index, bool isActive, bool isFocused)
+		private void DoListElementBackground(ReorderableList list, Rect rect, int index, bool isActive, bool isFocused)
 		{
 			if (!isActive && !isFocused) return;
 			GUI.color = isActive ? new Color(.7f, .7f, 1f) : new Color(.7f, .7f, 1f, .5f);
@@ -86,7 +89,7 @@ namespace zORgs.XML
 			_current = Event.current;
 			if (_current.type == EventType.Layout) return;
 
-			var (val, list) = Initialize(property);
+			var (val, list) = Initialize(position, property);
 
 			list.DoList(position);
 
@@ -94,53 +97,83 @@ namespace zORgs.XML
 				property.serializedObject.ApplyModifiedProperties();
 		}
 
-		private static void DoHeader(Event current, string propertyPath, XElement val, Rect firstLine)
+		private float DoHeader(Event current, string propertyPath, XElement val, Rect firstLine)
 		{
+			var currentLine = firstLine.AlignTop(EditorGUIUtility.singleLineHeight).SetY(firstLine.y + 2);
 			var opening = new GUIContent("<");
 			var closing = val.Children.Count > 0 ? new GUIContent(">") : new GUIContent("/>");
-			var attrRects = firstLine.Row(val.Attributes.Count());
-			var labels = new GUIContent[val.Attributes.Count];
-			var widths = new float[val.Attributes.Count * 2];
-			var rects = new Rect[val.Attributes.Count * 2 + 3];
+			int attrCount = val.Attributes.Count;
+			var labels = new GUIContent[attrCount];
+			var rects = new Rect[attrCount * 2 + 3];
 			float openingWidth = EditorStyles.label.CalcSize(opening).x;
-			rects[0] = firstLine.AlignLeft(openingWidth).Expand(0, -1);
-			for (int i = 0; i < attrRects.Length; i++)
+			int lineCount = 1;
+			int rectInd = 0;
+			rects[0] = currentLine.AlignLeft(openingWidth).Padding(0, -1);
+			float lineWidth = firstLine.width - rects[0].width;
+			bool isFirst = true;
+			for (int i = 0; i < attrCount; i++)
 			{
 				labels[i] = new GUIContent(val.Attributes[i].Name + "=");
-				widths[i * 2] = EditorStyles.label.CalcSize(labels[i]).x;
-				rects[i * 2 + 1] = rects[i * 2].MoveRightFor(widths[i * 2]);
+				float labelWidth = EditorStyles.label.CalcSize(labels[i]).x;
 
-				ProcessHeaderDoubleclick(current, propertyPath, rects[i * 2 + 1], i);
 				if (_editedAttributeInd == (propertyPath, i))
+					labelWidth = _attributeField.CalcSize(labels[i]).x;
+
+				float attrWidth = _attributeField.CalcSize(new GUIContent(val.Attributes[i].Value)).x;
+
+				lineWidth -= labelWidth + attrWidth + 2;
+				//Label rect with linewrap
+				if (i == attrCount - 1)
+					lineWidth -= 30;
+				if (!isFirst && (lineWidth < 0 || val.Attributes[i].IsVox))
 				{
-					widths[i * 2] = _attributeField.CalcSize(labels[i]).x;
-					rects[i * 2 + 1].width = widths[i * 2];
+					lineWidth = firstLine.width - (labelWidth + attrWidth + 2);
+					lineCount++;
+					currentLine = currentLine.MoveDown();
+					rects[++rectInd] = currentLine.AlignLeft(labelWidth);
 				}
-
-				widths[i * 2 + 1] = _attributeField.CalcSize(new GUIContent(val.Attributes[i].Value)).x;
-				rects[i * 2 + 2] = rects[i * 2 + 1].MoveRightFor(widths[i * 2 + 1], 0);
-			}
-			rects[rects.Length - 2] = rects[rects.Length - 3].MoveRightFor(20);
-			rects[rects.Length - 1] = rects[rects.Length - 2].MoveRightFor(EditorStyles.label.CalcSize(closing).x);
-
-			EditorGUI.LabelField(rects[0], opening);
-			for (int i = 0; i < attrRects.Length; i++)
-			{
-				Rect labelRect = rects[i * 2 + 1];
-				if (_editedAttributeInd == (propertyPath, i))
-					val.Attributes[i].Name = EditorGUI.TextField(labelRect, GUIContent.none, val.Attributes[i].Name, _attributeField);
 				else
-					EditorGUI.LabelField(labelRect, labels[i]);
-				Rect textFieldRect = rects[i * 2 + 2];
+					rects[++rectInd] = rects[rectInd - 1].MoveRightFor(labelWidth);
+
+				if (current != null)
+					ProcessHeaderDoubleclick(current, propertyPath, rects[rectInd], i);
+
+				//value rect
+				rects[++rectInd] = rects[rectInd - 1].MoveRightFor(attrWidth, 0);
+				isFirst = false;
+			}
+			rects[++rectInd] = rects[rectInd - 1].MoveRightFor(20);
+			rects[++rectInd] = rects[rectInd - 1].MoveRightFor(EditorStyles.label.CalcSize(closing).x);
+
+			var listHeaderHeight = currentLine.yMax - firstLine.yMin + 4;
+			var list = _lists[propertyPath];
+			if (list.headerHeight != listHeaderHeight)
+				list.headerHeight = listHeaderHeight;
+
+			if (current == null)
+				return listHeaderHeight;
+
+			rectInd = 0;
+			EditorGUI.LabelField(rects[rectInd++], opening);
+			for (int i = 0; i < attrCount; i++)
+			{
+				if (_editedAttributeInd == (propertyPath, i))
+					val.Attributes[i].Name = EditorGUI.TextField(rects[rectInd++], GUIContent.none, val.Attributes[i].Name, _attributeField);
+				else
+					EditorGUI.LabelField(rects[rectInd++], labels[i]);
+
+				Rect textFieldRect = rects[rectInd++];
 				val.Attributes[i].Value = EditorGUI.TextField(textFieldRect, GUIContent.none, val.Attributes[i].Value, _attributeField);
 			}
-			if (GUI.Button(rects[rects.Length - 2], "+"))
+			if (GUI.Button(rects[rectInd++], "+"))
 				val.Attributes.Add(new XAttribute("attr", "0"));
-			EditorGUI.LabelField(rects[rects.Length - 1], closing);
+			EditorGUI.LabelField(rects[rectInd++], closing);
 
 			int emptyIndex = val.Attributes.FindIndex(a => string.IsNullOrEmpty(a.Name));
 			if (emptyIndex != -1 && _editedAttributeInd != (propertyPath, emptyIndex))
 				val.Attributes.RemoveAt(emptyIndex);
+
+			return listHeaderHeight;
 		}
 
 		private static void ProcessHeaderDoubleclick(Event current, string propertyPath, Rect rect, int i)
