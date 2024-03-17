@@ -12,6 +12,8 @@ namespace zORgs.XML
 		private const int MAX_DEPTH = 10;
 
 		[SerializeField]
+		private string _name;
+		[SerializeField]
 		private string _body;
 		[SerializeField]
 		private List<XElement> _children = new List<XElement>();
@@ -20,6 +22,7 @@ namespace zORgs.XML
 		[SerializeField]
 		private bool _hasParent;
 
+		public string Name { get => _name; set => _name = value; }
 		public string Body { get => _body; set => _body = value; }
 		public List<XElement> Children => _children;
 		public bool HasChildren => _children.Count > 0;

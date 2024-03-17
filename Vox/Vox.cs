@@ -26,6 +26,7 @@ namespace zORgs.Voxes
 
 		public Vox(int[] array)
 		{
+			if (array is null) _array = new int[] { 1, 1, 1, 1 };
 			_size = new Vector3Int(array[0], array[1], array[2]);
 			_array = new Span<int>(array, 3, array.Length - 3).ToArray();
 			var pallete = new List<Color>() { Color.clear };

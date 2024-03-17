@@ -101,8 +101,8 @@ namespace zORgs.XML
 
 		private float DoHeader(Event current, string propertyPath, SerializedProperty property, XElement val, Rect firstLine)
 		{
-			var currentLine = firstLine.AlignTop(EditorGUIUtility.singleLineHeight).SetY(firstLine.y + 2);
-			var opening = new GUIContent("<");
+			var currentLine = firstLine.AlignTop(LineHeight).SetY(firstLine.y + 2);
+			var opening = new GUIContent("<"+val.Name);
 			var closing = val.Children.Count > 0 ? new GUIContent(">") : new GUIContent("/>");
 			int attrCount = val.Attributes.Count;
 			var labels = new GUIContent[attrCount];
@@ -111,6 +111,7 @@ namespace zORgs.XML
 			int lineCount = 1;
 			int rectInd = 0;
 			rects[0] = currentLine.AlignLeft(openingWidth).Padding(0, -1);
+			ProcessHeaderDoubleclick(current, propertyPath, rects[0], -1);
 			float lineWidth = firstLine.width - rects[0].width;
 			bool isFirst = true;
 			for (int i = 0; i < attrCount; i++)
@@ -121,7 +122,8 @@ namespace zORgs.XML
 				if (_editedAttributeInd == (propertyPath, i))
 					labelWidth = _attributeField.CalcSize(labels[i]).x;
 
-				float attrWidth = _attributeField.CalcSize(new GUIContent(val.Attributes[i].Value)).x;
+				float attrWidth = val.Attributes[i].IsVox ? VoxEditorWindow.VisualVoxelWidth(val.Attributes[i].Vox) :
+					_attributeField.CalcSize(new GUIContent(val.Attributes[i].Value)).x;
 
 				lineWidth -= labelWidth + attrWidth + 2;
 				//Label rect with linewrap
@@ -131,23 +133,24 @@ namespace zORgs.XML
 				{
 					lineWidth = firstLine.width - (labelWidth + attrWidth + 2);
 					lineCount++;
-					currentLine = currentLine.MoveDownFor(EditorGUIUtility.singleLineHeight + 2);
-					rects[++rectInd] = currentLine.AlignLeft(labelWidth);
+					currentLine = currentLine.MoveDownFor(LineHeight + 2);
+					rects[++rectInd] = currentLine.AlignLeft(labelWidth).SetHeight(LineHeight);
 				}
 				else
-					rects[++rectInd] = rects[rectInd - 1].MoveRightFor(labelWidth);
+					rects[++rectInd] = rects[rectInd - 1].MoveRightFor(labelWidth).SetHeight(LineHeight);
 
-				if (current != null)
-					ProcessHeaderDoubleclick(current, propertyPath, rects[rectInd], i);
+				ProcessHeaderDoubleclick(current, propertyPath, rects[rectInd], i);
 
 				//value rect
 				if (val.Attributes[i].IsVox)
 				{
-					currentLine = currentLine.SetHeight(VoxEditorWindow.VisualVoxelHeight(val.Attributes[i].Vox));
-					rects[++rectInd] = rects[rectInd - 1].MoveRightFor(currentLine.height, 0).SetHeight(currentLine.height);
+					float voxHeight = VoxEditorWindow.VisualVoxelHeight(val.Attributes[i].Vox);
+					if (currentLine.height < voxHeight)
+						currentLine = currentLine.SetHeight(voxHeight);
+					rects[++rectInd] = rects[rectInd - 1].MoveRightFor(attrWidth, 0).SetHeight(currentLine.height);
 				}
 				else
-					rects[++rectInd] = rects[rectInd - 1].MoveRightFor(attrWidth, 0);
+					rects[++rectInd] = rects[rectInd - 1].MoveRightFor(attrWidth, 0).SetHeight(LineHeight);
 
 				//Context menu for Voxels and conversion
 				if (Event.current.type == EventType.ContextClick && rects[rectInd].Contains(Event.current.mousePosition))
@@ -172,8 +175,8 @@ namespace zORgs.XML
 
 				isFirst = false;
 			}
-			rects[++rectInd] = rects[rectInd - 1].MoveRightFor(20);
-			rects[++rectInd] = rects[rectInd - 1].MoveRightFor(EditorStyles.label.CalcSize(closing).x);
+			rects[++rectInd] = rects[rectInd - 1].MoveRightFor(20).SetHeight(LineHeight);
+			rects[++rectInd] = rects[rectInd - 1].MoveRightFor(EditorStyles.label.CalcSize(closing).x).SetHeight(LineHeight);
 
 			var listHeaderHeight = currentLine.yMax - firstLine.yMin + 4;
 			var list = _lists[propertyPath];
@@ -184,7 +187,12 @@ namespace zORgs.XML
 				return listHeaderHeight;
 
 			rectInd = 0;
-			EditorGUI.LabelField(rects[rectInd++], opening);
+
+			if (_editedAttributeInd == (propertyPath, -1))
+				val.Name = EditorGUI.TextField(rects[rectInd++], val.Name);
+			else
+				EditorGUI.LabelField(rects[rectInd++], opening);
+
 			for (int i = 0; i < attrCount; i++)
 			{
 				if (_editedAttributeInd == (propertyPath, i))
@@ -216,7 +224,9 @@ namespace zORgs.XML
 
 		private static void ProcessHeaderDoubleclick(Event current, string propertyPath, Rect rect, int i)
 		{
-			if (current.type == EventType.KeyDown &&
+			if (current == null) return;
+
+				if (current.type == EventType.KeyDown &&
 				(current.keyCode == KeyCode.Tab ||
 				current.keyCode == KeyCode.KeypadEnter ||
 				current.keyCode == KeyCode.Return))

@@ -177,7 +177,9 @@ namespace zORgs.Voxes
 		public static (Vox.Voxel v, Rect pos) DrawVoxels(Event current, Vox vox, Rect drawRect, int layer = -1,
 			Vector2 mousePos = default, bool drawGrid = false)
 		{
-			var center = drawRect.position + Vector2.right * drawRect.width / 2 + Vector2.up * (vox.Size.y * 2) * visualVoxelOffset.y;
+
+			var hOffset = VisualHorizontalOffset(vox);
+			var center = drawRect.position + Vector2.right * (drawRect.width / 2 + hOffset) + Vector2.up * (vox.Size.y * 2) * visualVoxelOffset.y;
 			if (current.type == EventType.Repaint)
 			{
 				(Vox.Voxel v, Rect pos) vOver = (default, default);
@@ -206,6 +208,12 @@ namespace zORgs.Voxes
 
 		public static float VisualVoxelHeight(Vox vox) =>
 			(vox.Size.y * 2 + vox.Size.x + vox.Size.z) * visualVoxelOffset.y;
+
+		public static float VisualHorizontalOffset(Vox vox) =>
+			(vox.Size.z - vox.Size.x) * visualVoxelOffset.x / 2;
+
+		public static float VisualVoxelWidth(Vox vox) =>
+			(vox.Size.x + vox.Size.z) * visualVoxelOffset.x;
 
 		internal static float VisualVoxelDepth((int x, int y, int z, int col) v)
 		{
