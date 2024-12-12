@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEditor;
 using UnityEngine;
-using Utility;
+using BezierZUtility;
 
 namespace zORgs.Voxes
 {

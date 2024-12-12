@@ -1,0 +1,17 @@
+{
+    "name": "zORgs.XML",
+    "rootNamespace": "",
+    "references": [
+        "GUID:73c70a6eb6b6f444c878926f743350f6",
+        "GUID:486e77fc6b68f124f9a4c96c56e9eef6"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

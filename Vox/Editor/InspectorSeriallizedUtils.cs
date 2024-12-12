@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEditor;
 
-namespace Utility {
+namespace BezierZUtility {
 	/// <summary>
 	/// https://gist.github.com/douduck08/6d3e323b538a741466de00c30aa4b61f
 	/// </summary>

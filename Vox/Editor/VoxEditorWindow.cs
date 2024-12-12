@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 using System.Reflection;
-using Utility;
+using BezierZUtility;
 using UnityEngine.UIElements;
 
 namespace zORgs.Voxes
@@ -215,19 +215,19 @@ namespace zORgs.Voxes
 		public static float VisualVoxelWidth(Vox vox) =>
 			(vox.Size.x + vox.Size.z) * visualVoxelOffset.x;
 
-		internal static float VisualVoxelDepth((int x, int y, int z, int col) v)
+		public static float VisualVoxelDepth((int x, int y, int z, int col) v)
 		{
 			return Vector3.Dot(new Vector3(v.x, v.y, v.z), normalizedOne);
 		}
 
-		internal static Vector2 VoxelCanvasOffset((int x, int y, int z, int col) v)
+		public static Vector2 VoxelCanvasOffset((int x, int y, int z, int col) v)
 		{
 			return new Vector2(
 				visualVoxelOffset.x * (v.x - v.z),
 				visualVoxelOffset.y * (v.x - 2 * v.y + v.z)
 				);
 		}
-		internal static bool CanScrollLayer(Event current, int layer, int max) => 
+		public static bool CanScrollLayer(Event current, int layer, int max) => 
 			!((current.delta.y < 0 && layer == max) || (current.delta.y > 0 && layer == 0));
 	}
 }

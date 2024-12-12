@@ -1,16 +1,20 @@
 {
-    "name": "zORgs.XML",
+    "name": "zORgs.XML.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:73c70a6eb6b6f444c878926f743350f6",
-        "GUID:50224496d81ed6249bb99ddce52e3fdf"
+        "zORgs.XML",
+        "ZVox",
+        "st.rect-ex.Runtime",
+        "ZVox.Editor"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": true,
+    "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false
